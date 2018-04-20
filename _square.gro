@@ -1,0 +1,46 @@
+// Working square
+
+include gro
+
+set ( "dt", 0.1 ); // fast and inaccurate
+
+s1 := signal(1, 0.25);
+s2 := signal(1, 0.25);
+
+program p() := {
+  set ( "ecoli_growth_rate", 0.1 );
+  
+  t := 0;
+  s1m1 := 0;
+  s1m2 := 0;
+  s2m1 := 0;
+  s2m2 := 0;
+  
+  t > 0.3 : {
+    t := 0,
+	s1m1 := s1m2,
+    s1m2 := get_signal(s1),
+	s2m1 := s2m2,
+	s2m2 := get_signal(s2)
+  }
+  
+  s2m2 > s1m2 : {die()}
+  
+  true : {t := t + dt}
+};
+
+program main() := {
+  true: {set_signal(s1, 0, 0, 100)};
+  true: {set_signal(s2, 300, 0, 100)};
+  true: {set_signal(s2, 0, 300, 100)};
+  true: {set_signal(s2, -300, 0, 100)};
+  true: {set_signal(s2, 0, -300, 100)};
+};
+
+foreach q in range 20 do
+  ecoli ( [ 
+      x := rand(600)-300, 
+      y := rand(600)-300, 
+      theta := 0.01*rand(628) ], 
+    program p() )
+end;
