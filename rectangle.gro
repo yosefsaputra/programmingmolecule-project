@@ -1,0 +1,52 @@
+include gro
+
+set ( "dt", 0.1 );
+
+n := 5;
+s1 := signal(1, 0.1);
+s2 := signal(1, 0.1);
+s3 := signal(1, 0.1);
+s4 := signal(1, 0.1);
+
+k := 1; // reporter scaling factor
+program receiver() := {
+set ( "ecoli_growth_rate", 0.1 );
+ gfp := 0;
+ rate(k*get_signal(s1)) : {
+ die()
+ }
+ rate(k*get_signal(s2)) : {
+ die()
+ }
+ rate(k*get_signal(s3)) : {
+ die()
+ }
+ rate(k*get_signal(s4)) : {
+ die()
+ }
+};
+program main() := {
+t := 0;
+true : {t := t + 0.25*dt}
+ true : {
+ 
+ set_signal(s1,200*sin(t+6.28/5.0),200, 100)
+
+ }
+  true : {
+ set_signal(s2,-300,-100*cos(t+6.28/5.0), 100)
+ 
+ }
+true : {
+ set_signal(s3,300,100*cos(t+6.28/5.0), 100)
+ 
+ }
+
+ true : {
+ set_signal(s4,-200*sin(t+6.28/5.0),-200, 100)
+ 
+ }
+
+};
+ecoli ( [], program receiver() );
+
