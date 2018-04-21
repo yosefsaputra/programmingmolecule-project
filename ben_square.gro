@@ -1,0 +1,117 @@
+include gro
+
+asignal := signal(12, 1);
+cantBeASignal := signal(10, 1);
+bsignal := signal(12, 1);
+cantBeBSignal := signal(10, 1);
+
+program p() := {
+  yfp := 0;
+
+  a := false;
+  canBeA := true;
+  alpha := .0001;
+  gfp := 0;
+
+  b := false;
+  canBeB := true;
+  beta := .0001;
+  rfp := 0;
+
+  //keep time
+  r := [t := 0];
+  true: {
+    r.t := r.t + dt
+  }
+
+  //make one a after 100 steps
+  r.t > 100 & canBeA & rate(alpha): {
+    a := true,
+    canBeB := false,
+    emit_signal(cantBeASignal, 100)
+  }
+
+  //make a green
+  a: {
+    gfp := 1000
+  }
+
+  //make a emit asignal
+  a & r.t > 110: {
+    emit_signal(asignal, 100)
+  }
+
+  //tell the rest they can't be a
+  rate(get_signal(cantBeASignal)) & canBeA & a = false: {
+    canBeA := false,
+    emit_signal(cantBeASignal, 100)
+  }
+
+  //don't make more a's
+  daughter & a: {
+    a := false,
+    canBeA := false,
+    gfp := 0
+  }
+
+  //make one b after 120 steps
+  r.t > 120 & canBeB & rate(beta) & get_signal(asignal) < 0.1: {
+    b := true,
+    canBeB := false,
+    emit_signal(cantBeBSignal, 100)
+  }
+
+    //make b red
+    b: {
+      rfp := 1000
+    }
+
+    //make b emit bsignal
+    b & r.t > 150: {
+      emit_signal(bsignal, 100)
+    }
+
+  //tell the rest they can't be b
+  rate(get_signal(bsignal)) & canBeB & b = false: {
+    canBeB := false,
+    emit_signal(cantBeBSignal, 100)
+  }
+  rate(get_signal(cantBeBSignal)) & canBeB & b = false: {
+    canBeB := false,
+    emit_signal(cantBeBSignal, 100)
+  }
+
+  //don't make more b's
+  daughter & b: {
+    b := false,
+    canBeB := false,
+    rfp := 0
+  }
+
+  //stop growing at step 150
+  r.t > 150: {
+    set("ecoli_growth_rate", 0)
+  }
+
+  //halfway between a and b?
+  (get_signal(asignal) > 0.05 & get_signal(bsignal) > 0.05) & (get_signal(asignal) < (get_signal(bsignal) + .06)) & (get_signal(asignal) > (get_signal(bsignal) - .06)): {
+    yfp := 1000
+  }
+  (get_signal(asignal) > (get_signal(bsignal) + .06)): {
+    yfp := 0
+  }
+  (get_signal(asignal) < (get_signal(bsignal) - .06)): {
+    yfp := 0
+  }
+  ((get_signal(asignal) < .05) | (get_signal(bsignal) < .05)): {
+    yfp := 0
+  }
+
+  //print stuff
+  selected: {
+    print(get_signal(asignal), ", ", get_signal(bsignal))
+  }
+};
+
+set("ecoli_division_size_mean", 2.0);
+ecoli ([], program p());
