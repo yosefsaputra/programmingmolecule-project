@@ -4,10 +4,10 @@ asignal := signal(12, 1);
 cantBeASignal := signal(10, 1);
 bsignal := signal(12, 1);
 cantBeBSignal := signal(10, 1);
+s1 := signal(10, 1);
+s2 := signal(10, 1);
 
 program p() := {
-  yfp := 0;
-
   a := false;
   canBeA := true;
   alpha := .0001;
@@ -17,6 +17,13 @@ program p() := {
   canBeB := true;
   beta := .0001;
   rfp := 0;
+
+  c := false;
+  cfp := 0;
+  yfp := 0;
+
+  s1m2 := 0;
+  s2m2 := 0;
 
   //keep time
   r := [t := 0];
@@ -37,7 +44,7 @@ program p() := {
   }
 
   //make a emit asignal
-  a & r.t > 110: {
+  a & r.t > 110 & r.t < 160: {
     emit_signal(asignal, 100)
   }
 
@@ -89,27 +96,70 @@ program p() := {
   }
 
   //stop growing at step 150
-  r.t > 150: {
+  r.t > 150 & r.t < 165: {
     set("ecoli_growth_rate", 0)
   }
 
   //halfway between a and b?
-  (get_signal(asignal) > 0.05 & get_signal(bsignal) > 0.05) & (get_signal(asignal) < (get_signal(bsignal) + .06)) & (get_signal(asignal) > (get_signal(bsignal) - .06)): {
+  (r.t < 160) & (get_signal(asignal) > 0.05 & get_signal(bsignal) > 0.05) & (get_signal(asignal) < (get_signal(bsignal) + .06)) & (get_signal(asignal) > (get_signal(bsignal) - .06)): {
+    c := true
+  }
+  (r.t < 160) & (get_signal(asignal) > (get_signal(bsignal) + .06)): {
+    c := false
+  }
+  (r.t < 160) & (get_signal(asignal) < (get_signal(bsignal) - .06)): {
+    c := false
+  }
+  (r.t < 160) & ((get_signal(asignal) < .05) | (get_signal(bsignal) < .05)): {
+    c := false
+  }
+
+  (r.t < 160) & c & (get_signal(asignal) > 0.3 | get_signal(bsignal) > 0.3): {
+    cfp := 1000
+  }
+
+  (r.t < 160) & c & (get_signal(asignal) < 0.1 | get_signal(bsignal) < 0.1): {
     yfp := 1000
   }
-  (get_signal(asignal) > (get_signal(bsignal) + .06)): {
+
+  c = false:{
+    cfp := 0,
     yfp := 0
   }
-  (get_signal(asignal) < (get_signal(bsignal) - .06)): {
+
+  daughter & c: {
+    c := false,
+    cfp := 0
+  }
+
+  (r.t > 160) & (a | b): {
+    a := true,
+    b := false,
+    rfp := 0
+  }
+  (r.t > 160) & c & (yfp = 1000): {
+    a := true,
+    c := false,
     yfp := 0
   }
-  ((get_signal(asignal) < .05) | (get_signal(bsignal) < .05)): {
-    yfp := 0
+  (r.t > 165) & c: {
+    emit_signal(s2, 10);
+  }
+  (r.t > 165) & a: {
+    emit_signal(s1, 10)
+  }
+
+  (r.t > 170) & (a = false) & (c = false): {
+    s1m2 := get_signal(s1),
+    s2m2 := get_signal(s2)
+  }
+  s1m2 > s2m2: {
+    die()
   }
 
   //print stuff
   selected: {
-    print(get_signal(asignal), ", ", get_signal(bsignal))
+    print(get_signal(s1), ", ", get_signal(s2))
   }
 };
 
