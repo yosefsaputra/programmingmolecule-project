@@ -143,10 +143,15 @@ program p() := {
     yfp := 0
   }
   (r.t > 165) & c: {
-    emit_signal(s2, 10);
+    emit_signal(s2, 7)
   }
   (r.t > 165) & a: {
-    emit_signal(s1, 10)
+    emit_signal(s1, 10),
+    absorb_signal(s2, 2)
+  }
+  (r.t > 165) & a & (get_signal(s1) < 20): {
+    emit_signal(s1, 20),
+    absorb_signal(s2, 2)
   }
 
   (r.t > 170) & (a = false) & (c = false): {
