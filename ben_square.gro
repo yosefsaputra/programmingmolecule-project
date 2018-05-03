@@ -62,7 +62,7 @@ program p() := {
   }
 
   //make one b after 120 steps
-  r.t > 120 & canBeB & rate(beta) & get_signal(asignal) < 0.1: {
+  r.t > 120 & canBeB & rate(beta) & get_signal(asignal) < 0.02: {
     b := true,
     canBeB := false,
     emit_signal(cantBeBSignal, 100)
@@ -101,25 +101,28 @@ program p() := {
   }
 
   //halfway between a and b?
-  (r.t < 160) & (get_signal(asignal) > 0.05 & get_signal(bsignal) > 0.05) & (get_signal(asignal) < (get_signal(bsignal) + .06)) & (get_signal(asignal) > (get_signal(bsignal) - .06)): {
+  (r.t < 160) & (get_signal(asignal) > 0.05 & get_signal(bsignal) > 0.05) & (get_signal(asignal) < (get_signal(bsignal) + .15)) & (get_signal(asignal) > (get_signal(bsignal) - .15)): {
     c := true
   }
-  (r.t < 160) & (get_signal(asignal) > (get_signal(bsignal) + .06)): {
+  (r.t < 160) & (get_signal(asignal) > (get_signal(bsignal) + .15)): {
     c := false
   }
-  (r.t < 160) & (get_signal(asignal) < (get_signal(bsignal) - .06)): {
+  (r.t < 160) & (get_signal(asignal) < (get_signal(bsignal) - .15)): {
     c := false
   }
   (r.t < 160) & ((get_signal(asignal) < .05) | (get_signal(bsignal) < .05)): {
     c := false
   }
 
-  (r.t < 160) & c & (get_signal(asignal) > 0.3 | get_signal(bsignal) > 0.3): {
+  (r.t < 160) & c & (get_signal(asignal) > 0.35 | get_signal(bsignal) > 0.35): {
     cfp := 1000
   }
 
-  (r.t < 160) & c & (get_signal(asignal) < 0.1 | get_signal(bsignal) < 0.1): {
+  (r.t < 160) & c & (get_signal(asignal) < 0.08 & get_signal(bsignal) < 0.08): {
     yfp := 1000
+  }
+  (r.t < 160) & c & (get_signal(asignal) > 0.08 | get_signal(bsignal) > 0.08): {
+    yfp := 0
   }
 
   c = false:{
@@ -142,16 +145,14 @@ program p() := {
     c := false,
     yfp := 0
   }
+  (r.t > 161) & c & (cfp = 0): {
+    c := false
+  }
   (r.t > 165) & c: {
-    emit_signal(s2, 7)
+    emit_signal(s2, 20)
   }
   (r.t > 165) & a: {
-    emit_signal(s1, 10),
-    absorb_signal(s2, 2)
-  }
-  (r.t > 165) & a & (get_signal(s1) < 20): {
-    emit_signal(s1, 20),
-    absorb_signal(s2, 2)
+    emit_signal(s1, 20)
   }
 
   (r.t > 170) & (a = false) & (c = false): {
@@ -164,7 +165,7 @@ program p() := {
 
   //print stuff
   selected: {
-    print(get_signal(s1), ", ", get_signal(s2))
+    print(get_signal(asignal), ", ", get_signal(bsignal), ", ", get_signal(s1), ", ", get_signal(s2))
   }
 };
 
